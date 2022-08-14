@@ -23,6 +23,13 @@ enum JobStatus {
   CANCELED
 }
 
+enum RankLevel {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
 model User {
   id          String @id @default(cuid())
   createdAt   DateTime @default(now())
@@ -84,4 +91,21 @@ model Category {
   name        String @unique()
   
   @@map("categories")
+}
+
+model Rank {
+  id          String @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deleted     Boolean @default(false)
+
+  minReviews  Int
+  maxReviews  Int
+  
+  minGrade    Decimal
+  maxGrade    Decimal
+
+  rankLevel   String @unique()
+  
+  @@map("ranks")
 }
