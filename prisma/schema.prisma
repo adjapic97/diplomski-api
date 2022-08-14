@@ -16,6 +16,13 @@ enum UserType {
   EMPLOYER
 }
 
+enum JobStatus {
+  OPEN
+  IN_PROGRESS
+  FINISHED
+  CANCELED
+}
+
 model User {
   id          String @id @default(cuid())
   createdAt   DateTime @default(now())
@@ -25,15 +32,56 @@ model User {
 
   firstName   String
   lastName    String
-  username    String
-  email       String
-  phoneNumber String
+  username    String @unique()
+  email       String @unique()
+  phoneNumber String @unique()
   password    String
   
   photoUrl    String?
   description String?
   
   dateOfBirth DateTime
-  penaltyDate DateTime
+  penaltyDate DateTime?
 
+  @@map("users")
+
+  jobPosts JobPost[]
+}
+
+
+model JobPost {
+  id          String @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deleted     Boolean @default(false)
+
+  title       String
+  description String
+  hourPrice   Decimal?
+  hourNumber  Decimal?
+  fixedPrice  Boolean @default(false)
+  fixedPriceAmount Decimal?
+
+  multipleEmployees Boolean @default(false)
+
+  location    String
+  date        DateTime
+  time        String
+  category    String
+  status      JobStatus @default(OPEN)
+
+  userId      String
+  user        User @relation(fields: [userId], references: [id])
+  @@map("job_posts")
+}
+
+model Category {
+  id          String @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deleted     Boolean @default(false)
+
+  name        String @unique()
+  
+  @@map("categories")
 }
