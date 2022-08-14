@@ -9,11 +9,11 @@ export class AuthService {
     constructor(private prismaService: PrismaService) { }
 
     signup(dto: AuthDto) {
-        console.log(dto);
+        return { msg: 'I am signing up' };
     }
 
     signin() {
-        
+       return { msg: 'I am signing in' };
     }
     
 }
