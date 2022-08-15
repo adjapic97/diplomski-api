@@ -32,11 +32,11 @@ export class AuthService {
         },
       });
 
-      return this.signToken(user.id, user.email);
+      return this.signToken(user.id, user.email, user.userType);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          throw new ForbiddenException(error.meta.target[0] + ' is taken!');
+          throw new ForbiddenException(`${error.meta.target[0]} is taken!`);
         }
       }
       throw error;
@@ -56,13 +56,14 @@ export class AuthService {
 
     if (!pwMatches) throw new ForbiddenException('Invalid password');
 
-    return this.signToken(user.id, user.email);
+    return this.signToken(user.id, user.email, user.userType);
   }
 
-  async signToken(userId: string, email: string): Promise<{ access_token: string }> {
+  async signToken(userId: string, email: string, userType: UserType): Promise<{ access_token: string }> {
     const payload = {
       sub: userId,
       email: email,
+      userType: userType,
     };
     const token = await this.jwt.signAsync(payload, {
       expiresIn: '15m',
