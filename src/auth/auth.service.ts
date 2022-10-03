@@ -73,4 +73,8 @@ export class AuthService {
       access_token: token,
     };
   }
+
+  async invalidateToken(token: string) {} // TODO
+
+  async forgotPassword() {} // TODO
 }

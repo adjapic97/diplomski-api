@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,6 +5,197 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deleted       Boolean         @default(false)
+  userType      UserType        @default(EMPlOYEE)
+  firstName     String
+  lastName      String
+  username      String          @unique
+  email         String          @unique
+  phoneNumber   String          @unique
+  password      String
+  photoUrl      String?
+  description   String?
+  dateOfBirth   DateTime
+  penaltyDate   DateTime?
+  offers        Offer[]
+  jobPosts      JobPost[]
+  reviewsPosted Review[]        @relation("reviewsPosted")
+  skills        SkillsOnUsers[]
+
+  @@map("users")
+}
+
+model JobPost {
+  id                String                 @id @default(cuid())
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  deleted           Boolean                @default(false)
+  title             String
+  description       String
+  hourPrice         Decimal?
+  hourNumber        Decimal?
+  fixedPrice        Boolean                @default(true)
+  fixedPriceAmount  Decimal?
+  multipleEmployees Boolean                @default(false)
+  location          String
+  date              DateTime
+  time              String
+  category          String
+  status            JobStatus              @default(OPEN)
+  userId            String
+  user              User                   @relation(fields: [userId], references: [id])
+  offers            Offer[]
+  categories        CategoriesOnJobPosts[]
+  skills            SkillsOnJobPosts[]
+
+  @@map("job_posts")
+}
+
+model Category {
+  id        String                 @id @default(cuid())
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  deleted   Boolean                @default(false)
+  name      String                 @unique
+  jobPosts  CategoriesOnJobPosts[]
+
+  @@map("categories")
+}
+
+model Skill {
+  id        String             @id @default(cuid())
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  deleted   Boolean            @default(false)
+  name      String             @unique
+  jobPosts  SkillsOnJobPosts[]
+  users     SkillsOnUsers[]
+
+  @@map("skills")
+}
+
+model Review {
+  id                String         @id @default(cuid())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  deleted           Boolean        @default(false)
+  rating            Decimal
+  description       String?
+  userId            String
+  reviewerId        String
+  reviewOnUserJobId String
+  reviewer          User           @relation("reviewsPosted", fields: [reviewerId], references: [id])
+  userReveiwed      UserHasJobPost @relation("reviewsReceived", fields: [reviewOnUserJobId], references: [id])
+
+  @@map("reviews")
+}
+
+model Offer {
+  id             String          @id @default(cuid())
+  createdAt      DateTime        @default(now())
+  status         OfferStatus     @default(PENDING)
+  description    String
+  userId         String
+  jobPostId      String
+  jobPost        JobPost         @relation(fields: [jobPostId], references: [id])
+  user           User            @relation(fields: [userId], references: [id])
+  userHasJobPost UserHasJobPost?
+}
+
+model City {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deleted    Boolean  @default(false)
+  name       String   @unique
+  postalCode String   @unique
+  addressId  String   @unique
+  address    Address  @relation(fields: [addressId], references: [id])
+
+  @@map("cities")
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
+  city      City?
+
+  @@map("addresses")
+}
+
+model SkillsOnUsers {
+  id         String     @id @default(cuid())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  deleted    Boolean    @default(false)
+  skillLevel SkillLevel @default(BEGINNER)
+  skillId    String
+  userId     String
+  skill      Skill      @relation(fields: [skillId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@map("skills_on_users")
+}
+
+model SkillsOnJobPosts {
+  id               String     @id @default(cuid())
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  deleted          Boolean    @default(false)
+  skillLevelNeeded SkillLevel @default(BEGINNER)
+  jobPostId        String
+  skillId          String
+  jobPost          JobPost    @relation(fields: [jobPostId], references: [id])
+  skill            Skill      @relation(fields: [skillId], references: [id])
+
+  @@map("skills_on_job_posts")
+}
+
+model CategoriesOnJobPosts {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deleted    Boolean  @default(false)
+  categoryId String
+  jobPostId  String
+  category   Category @relation(fields: [categoryId], references: [id])
+  jobPost    JobPost  @relation(fields: [jobPostId], references: [id])
+
+  @@map("categories_on_job_posts")
+}
+
+model UserHasJobPost {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  amountEarned    Decimal  @default(0)
+  offerId         String   @unique
+  offer           Offer    @relation(fields: [offerId], references: [id])
+  reviewsReceived Review[] @relation("reviewsReceived")
+
+  @@map("user_has_job_post")
+}
+
+model Rank {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deleted    Boolean  @default(false)
+  minReviews Int
+  maxReviews Int
+  minGrade   Decimal
+  maxGrade   Decimal
+  rankLevel  String   @unique
+
+  @@map("ranks")
 }
 
 enum UserType {
@@ -30,82 +218,16 @@ enum RankLevel {
   PLATINUM
 }
 
-model User {
-  id          String @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean @default(false)
-  userType    UserType @default(EMPlOYEE)
-
-  firstName   String
-  lastName    String
-  username    String @unique()
-  email       String @unique()
-  phoneNumber String @unique()
-  password    String
-  
-  photoUrl    String?
-  description String?
-  
-  dateOfBirth DateTime
-  penaltyDate DateTime?
-
-  @@map("users")
-
-  jobPosts JobPost[]
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELED
 }
 
-
-model JobPost {
-  id          String @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean @default(false)
-
-  title       String
-  description String
-  hourPrice   Decimal?
-  hourNumber  Decimal?
-  fixedPrice  Boolean @default(false)
-  fixedPriceAmount Decimal?
-
-  multipleEmployees Boolean @default(false)
-
-  location    String
-  date        DateTime
-  time        String
-  category    String
-  status      JobStatus @default(OPEN)
-
-  userId      String
-  user        User @relation(fields: [userId], references: [id])
-  @@map("job_posts")
-}
-
-model Category {
-  id          String @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean @default(false)
-
-  name        String @unique()
-  
-  @@map("categories")
-}
-
-model Rank {
-  id          String @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean @default(false)
-
-  minReviews  Int
-  maxReviews  Int
-  
-  minGrade    Decimal
-  maxGrade    Decimal
-
-  rankLevel   String @unique()
-  
-  @@map("ranks")
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
 }
