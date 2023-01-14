@@ -1,14 +1,16 @@
-import { HttpException, Injectable } from '@nestjs/common';
-import { PrismaClient, SkillLevel } from '@prisma/client';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { SkillLevel, UserType } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import * as argon from 'argon2';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {
+  constructor(private prismaService: PrismaService) {
   }
 
   async findOne(id: string, includeSkills: boolean) {
-    return await this.prisma.user.findUniqueOrThrow({
+    return await this.prismaService.user.findUniqueOrThrow({
       where: {
         id: id,
       },
@@ -19,7 +21,7 @@ export class UserService {
   }
 
   async getUserSkills(id: string) {
-    return await this.prisma.skillsOnUsers.findMany({
+    return await this.prismaService.skillsOnUsers.findMany({
       where: {
         userId: id,
       },
@@ -30,7 +32,7 @@ export class UserService {
   }
 
   async getUserSkillsByLevel(id: string, level: SkillLevel) {
-    return await this.prisma.skillsOnUsers.findMany({
+    return await this.prismaService.skillsOnUsers.findMany({
       where: {
         userId: id,
         skillLevel: level,
@@ -42,7 +44,7 @@ export class UserService {
   }
 
   async addSkillToUser(skill, user) {
-    let foundSkill = await this.prisma.skillsOnUsers.findFirst({
+    let foundSkill = await this.prismaService.skillsOnUsers.findFirst({
       where: {
         skill: {
           name: {
@@ -53,7 +55,7 @@ export class UserService {
       },
     });
     if (!foundSkill) {
-      return await this.prisma.user.update({
+      return await this.prismaService.user.update({
         where: { id: user.id },
         data: {
           skills: {
@@ -67,7 +69,7 @@ export class UserService {
         },
       });
     } else {
-      let userSkills = await this.prisma.skillsOnUsers.findMany({
+      let userSkills = await this.prismaService.skillsOnUsers.findMany({
         where: {
           userId: user.id,
         },
@@ -81,7 +83,7 @@ export class UserService {
   async updateSkill(skill, user) {}
 
   async findUniqueSkills(userId) {
-    let skillsOnUser = await this.prisma.skill.findMany({
+    let skillsOnUser = await this.prismaService.skill.findMany({
       where: {
         NOT: {
           users: { some: { user: { id: userId } } },
@@ -92,7 +94,7 @@ export class UserService {
   }
 
   async findAllUsersOnSkill(skillId) {
-    return await this.prisma.user.findMany({
+    return await this.prismaService.user.findMany({
       where: {
         skills: { some: { skill: { id: skillId } } },
       },
@@ -100,7 +102,7 @@ export class UserService {
   }
 
   async findAllSkillsOnUser(user) {
-    return await this.prisma.skillsOnUsers.findMany({
+    return await this.prismaService.skillsOnUsers.findMany({
       where: {
         userId: user.id,
       },
@@ -111,7 +113,7 @@ export class UserService {
   }
 
   async softUserDelete(userId) {
-    this.prisma.$use(async (params, next) => {
+    this.prismaService.$use(async (params, next) => {
       // Check incoming query type
       if (params.model.toString() == 'Post') {
         if (params.action == 'delete') {
@@ -133,4 +135,34 @@ export class UserService {
       return next(params)
     })
   }
+
+  async createNewUser(dto) {
+    //generate password, send it to email of the newly created user
+    const hash = await argon.hash(dto.password);
+
+    try {
+      const user = await this.prismaService.user.create({
+        data: {
+          email: dto.email,
+          password: hash,
+          username: dto.username,
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          phoneNumber: dto.phoneNumber,
+          dateOfBirth: dto.dateOfBirth,
+          userType: UserType[dto.userType],
+        },
+      });
+
+      return user;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ForbiddenException(`${error.meta.target[0]} is taken!`);
+        }
+      }
+      throw error;
+    }
+  }
+  
 }

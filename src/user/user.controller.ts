@@ -12,12 +12,12 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { User, UserType, SkillsOnUsers } from '@prisma/client';
-import { IsEmpty } from 'class-validator';
+import { User, UserType } from '@prisma/client';
 import { GetUser, Roles } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
 import { Excluder } from 'src/util';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UserService } from './user.service';
 
 @Controller('users')
@@ -133,6 +133,21 @@ export class UserController {
       );
     }
     return await this.userService.softUserDelete(body.userId);
+  }
+
+  @UseGuards(JwtGuard, RolesGuard)
+  @Post('create-user')
+  async createUser(@Body() createUserDto: CreateUserDto) {
+    if (!createUserDto) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'you are missing a body of request',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return await this.userService.createNewUser(createUserDto);
   }
 
 }

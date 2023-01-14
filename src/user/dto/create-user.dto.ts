@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsEmail, IsEnum, IsNotEmpty, IsString } from "class-validator";
+import {IsEmail, IsEnum, IsNotEmpty, IsString } from "class-validator";
 
 
 
@@ -8,7 +8,7 @@ enum UserType {
     EMPLOYER = 'EMPLOYER',
     EMPlOYEE = 'EMPlOYEE'
 }
-export class RegisterDto {
+export class CreateUserDto {
 
     @IsNotEmpty()
     @IsString()
@@ -25,8 +25,8 @@ export class RegisterDto {
     @IsNotEmpty()
     @IsString()
     phoneNumber: string;
-    description: string;
 
+    description: string;
 
     @IsNotEmpty()
     @Type(() => Date)
