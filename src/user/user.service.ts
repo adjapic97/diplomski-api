@@ -1,11 +1,10 @@
-import { HttpException, Injectable } from '@nestjs/common';
-import { PrismaClient, SkillLevel } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import { SkillLevel } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {
-  }
+  constructor(private prisma: PrismaService) {}
 
   async findOne(id: string, includeSkills: boolean) {
     return await this.prisma.user.findUniqueOrThrow({
@@ -67,7 +66,7 @@ export class UserService {
         },
       });
     } else {
-      let userSkills = await this.prisma.skillsOnUsers.findMany({
+      await this.prisma.skillsOnUsers.findMany({
         where: {
           userId: user.id,
         },
@@ -117,20 +116,20 @@ export class UserService {
         if (params.action == 'delete') {
           // Delete queries
           // Change action to an update
-          params.action = 'update'
-          params.args['data'] = { deleted: true }
+          params.action = 'update';
+          params.args['data'] = { deleted: true };
         }
         if (params.action == 'deleteMany') {
           // Delete many queries
-          params.action = 'updateMany'
+          params.action = 'updateMany';
           if (params.args.data != undefined) {
-            params.args.data['deleted'] = true
+            params.args.data['deleted'] = true;
           } else {
-            params.args['data'] = { deleted: true }
+            params.args['data'] = { deleted: true };
           }
         }
       }
-      return next(params)
-    })
+      return next(params);
+    });
   }
 }

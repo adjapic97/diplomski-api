@@ -45,7 +45,7 @@ model JobPost {
   multipleEmployees Boolean                @default(false)
   location          String
   date              DateTime
-  time              String
+  time              String?
   category          String
   status            JobStatus              @default(OPEN)
   userId            String

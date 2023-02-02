@@ -12,8 +12,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { User, UserType, SkillsOnUsers } from '@prisma/client';
-import { IsEmpty } from 'class-validator';
+import { User, UserType } from '@prisma/client';
 import { GetUser, Roles } from 'src/auth/decorator';
 import { JwtGuard } from 'src/auth/guard';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
